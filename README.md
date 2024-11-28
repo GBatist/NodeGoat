@@ -2,6 +2,10 @@
 
 Being lightweight, fast, and scalable, Node.js is becoming a widely adopted platform for developing web applications. This project provides an environment to learn how OWASP Top 10 security risks apply to web applications developed using Node.js and how to effectively address them.
 
+## Status
+
+[![E2E Test](https://github.com/GBatist/NodeGoat/actions/workflows/e2e-test.yml/badge.svg)](https://github.com/GBatist/NodeGoat/actions/workflows/e2e-test.yml) [![Lint](https://github.com/GBatist/NodeGoat/actions/workflows/lint.yml/badge.svg)](https://github.com/GBatist/NodeGoat/actions/workflows/lint.yml) [![Mend SAST Scan](https://github.com/GBatist/NodeGoat/actions/workflows/main.yml/badge.svg)](https://github.com/GBatist/NodeGoat/actions/workflows/main.yml)
+
 ## Getting Started
 
 OWASP Top 10 for Node.js web applications:
