@@ -22,12 +22,5 @@ jobs:
         MEND_ORG_TOKEN: ${{ secrets.MEND_ORG_TOKEN }}
         PROJECT_NAME: pipeline-scan-${{ github.repository }}-${{ github.sha }}
       run: |
-        docker run --rm \
-          -e MEND_API_KEY=$MEND_API_KEY \
-          -e MEND_ORG_TOKEN=$MEND_ORG_TOKEN \
-          -v $(pwd):/workspace \
-          mend/sast-cli:latest \
-          --api-key $MEND_API_KEY \
-          --org-token $MEND_ORG_TOKEN \
-          --scan-dir /workspace \
-          --project-name $PROJECT_NAME
+        sudo curl https://downloads.mend.io/cli/linux_amd64/mend -o /usr/local/bin/mend && sudo chmod +x /usr/local/bin/mend
+        mend code --api-key $MEND_API_KEY --org-token $MEND_ORG_TOKEN --d . --name $PROJECT_NAME
