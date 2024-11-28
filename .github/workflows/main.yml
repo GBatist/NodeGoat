@@ -16,11 +16,20 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Mend SAST Scan
+    - name: Install Mend CLI
+      run: |
+        sudo curl https://downloads.mend.io/cli/linux_amd64/mend -o /usr/local/bin/mend
+        sudo chmod +x /usr/local/bin/mend
+
+    - name: Authenticate Mend CLI
       env:
         MEND_API_KEY: ${{ secrets.MEND_API_KEY }}
         MEND_ORG_TOKEN: ${{ secrets.MEND_ORG_TOKEN }}
+      run: |
+        mend auth login --api-key $MEND_API_KEY --org-token $MEND_ORG_TOKEN
+
+    - name: Mend SAST Scan
+      env:
         PROJECT_NAME: pipeline-scan-${{ github.repository }}-${{ github.sha }}
       run: |
-        sudo curl https://downloads.mend.io/cli/linux_amd64/mend -o /usr/local/bin/mend && sudo chmod +x /usr/local/bin/mend
-        mend code --api-key $MEND_API_KEY --org-token $MEND_ORG_TOKEN --d . --name $PROJECT_NAME
+        mend code --d . --name $PROJECT_NAME
