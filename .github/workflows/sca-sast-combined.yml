@@ -1,0 +1,100 @@
+name: Mend SCA + SAST Scan
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 0 1 * *" # Runs at 00:00 on day-of-month 1
+  workflow_dispatch:
+    inputs:
+      sca_scan_type:
+        description: "SCA scan type: 1=standard, 2=extended, 3=UA"
+        required: false
+        default: "3"
+
+jobs:
+  mend-sca-sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Restore baseline marker
+        id: baseline-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .mend-baseline-marker
+          key: mend-baseline-uploaded-${{ github.repository }}
+
+      - name: Download Mend CLI
+        shell: bash
+        run: |
+          echo "Downloading Mend CLI..."
+          mkdir -p ./mend-cli
+          curl https://downloads.mend.io/cli/linux_amd64/mend -o ./mend-cli/mend
+          chmod +x ./mend-cli/mend
+
+      - name: Run Mend SCA Scan
+        shell: bash
+        env:
+          MEND_EMAIL: ${{ secrets.MEND_EMAIL }}
+          MEND_USER_KEY: ${{ secrets.MEND_USER_KEY }}
+          MEND_URL: ${{ secrets.MEND_URL }}
+          SCA_SCAN_TYPE: ${{ inputs.sca_scan_type || vars.MEND_SCA_SCAN_TYPE || '3' }}
+        run: |
+          echo "Starting Mend SCA Scan process..."
+          MEND_SCOPE="Trimble, Inc - Sandbox//Product Test Gabriel 3//${{ github.event.repository.name }}"
+
+          # 1=standard, 2=extended, 3=UA (default)
+          case "$SCA_SCAN_TYPE" in
+            1)
+              echo "SCA type 1 selected: standard"
+              ./mend-cli/mend dep --non-interactive -u -s "$MEND_SCOPE" -d "<TARGET DIRECTORY>"
+              ;;
+            2)
+              echo "SCA type 2 selected: extended"
+              ./mend-cli/mend dep --non-interactive -u -e -s "$MEND_SCOPE" -d "<TARGET DIRECTORY>"
+              ;;
+            3|"")
+              echo "SCA type 3 selected (or not provided): Unified Agent"
+              export WS_PRODUCTNAME="Product Test Gabriel 3"
+              export WS_PROJECTNAME="${{ github.event.repository.name }}"
+              ./mend-cli/mend ua --non-interactive -d "<TARGET DIRECTORY>"
+              ;;
+            *)
+              echo "Invalid SCA scan type '$SCA_SCAN_TYPE'. Valid values: 1, 2, 3"
+              exit 1
+              ;;
+          esac
+
+          echo "Mend SCA Scan process finished."
+
+      - name: Run Mend SAST Scan
+        shell: bash
+        env:
+          MEND_EMAIL: ${{ secrets.MEND_EMAIL }}
+          MEND_USER_KEY: ${{ secrets.MEND_USER_KEY }}
+          MEND_URL: ${{ secrets.MEND_URL }}
+          BASELINE_CACHE_HIT: ${{ steps.baseline-cache.outputs.cache-hit }}
+        run: |
+          echo "Starting Mend SAST Scan process..."
+          MEND_SCOPE="Trimble, Inc - Sandbox//Product Test Gabriel 3//${{ github.event.repository.name }}"
+
+          if [[ "$BASELINE_CACHE_HIT" != "true" ]]; then
+            echo "No baseline marker found. Running one-time baseline upload..."
+            ./mend-cli/mend code --non-interactive --secrets-detection --upload-baseline -s "$MEND_SCOPE" -d "."
+            mkdir -p .mend-baseline-marker
+            touch .mend-baseline-marker/uploaded
+          else
+            echo "Baseline marker found. Running standard scan..."
+            ./mend-cli/mend code --non-interactive --secrets-detection -s "$MEND_SCOPE" -d "."
+          fi
+
+          echo "Mend SAST Scan process finished."
+
+      - name: Save baseline marker
+        if: steps.baseline-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .mend-baseline-marker
+          key: mend-baseline-uploaded-${{ github.repository }}
