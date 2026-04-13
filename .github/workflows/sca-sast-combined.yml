@@ -49,17 +49,17 @@ jobs:
           case "$SCA_SCAN_TYPE" in
             1)
               echo "SCA type 1 selected: standard"
-              ./mend-cli/mend dep --non-interactive -u -s "$MEND_SCOPE" -d "<TARGET DIRECTORY>"
+              ./mend-cli/mend dep --non-interactive -u -s "$MEND_SCOPE" -d "."
               ;;
             2)
               echo "SCA type 2 selected: extended"
-              ./mend-cli/mend dep --non-interactive -u -e -s "$MEND_SCOPE" -d "<TARGET DIRECTORY>"
+              ./mend-cli/mend dep --non-interactive -u -e -s "$MEND_SCOPE" -d "."
               ;;
             3|"")
               echo "SCA type 3 selected (or not provided): Unified Agent"
               export WS_PRODUCTNAME="Product Test Gabriel 3"
               export WS_PROJECTNAME="${{ github.event.repository.name }}"
-              ./mend-cli/mend ua --non-interactive -d "<TARGET DIRECTORY>"
+              ./mend-cli/mend ua --non-interactive -d "."
               ;;
             *)
               echo "Invalid SCA scan type '$SCA_SCAN_TYPE'. Valid values: 1, 2, 3"
