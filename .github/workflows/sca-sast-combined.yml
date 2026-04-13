@@ -59,7 +59,7 @@ jobs:
               echo "SCA type 3 selected (or not provided): Unified Agent"
               export WS_PRODUCTNAME="Product Test Gabriel 3"
               export WS_PROJECTNAME="${{ github.event.repository.name }}"
-              ./mend-cli/mend ua --non-interactive -d "."
+              ./mend-cli/mend ua -d "."
               ;;
             *)
               echo "Invalid SCA scan type '$SCA_SCAN_TYPE'. Valid values: 1, 2, 3"
